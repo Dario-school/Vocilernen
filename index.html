@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Schulhilfen</title>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:'Segoe UI',sans-serif;background:linear-gradient(135deg,#1a1a2e 0%,#16213e 50%,#0f3460 100%);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+
+        /* AUTH */
+        .auth-wrap{width:100%;max-width:440px}
+        .auth-box{background:white;border-radius:24px;box-shadow:0 25px 60px rgba(0,0,0,.5);padding:48px 40px;text-align:center;display:none}
+        .auth-box.active{display:block}
+        .auth-logo{font-size:3.2em;margin-bottom:8px}
+        .auth-title{font-size:2em;font-weight:800;color:#1a1a2e;margin-bottom:4px}
+        .auth-sub{color:#888;margin-bottom:32px}
+        .input-field{width:100%;padding:13px 16px;border:2px solid #e0e0e0;border-radius:12px;font-size:1em;margin-bottom:12px;transition:border-color .2s;outline:none}
+        .input-field:focus{border-color:#0f3460}
+        .btn-primary{width:100%;padding:14px;background:linear-gradient(135deg,#0f3460,#533483);color:white;border:none;border-radius:12px;font-size:1.05em;font-weight:700;cursor:pointer;transition:transform .2s,box-shadow .2s;margin-bottom:10px}
+        .btn-primary:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(15,52,96,.4)}
+        .btn-google{width:100%;padding:13px;background:white;color:#333;border:2px solid #e0e0e0;border-radius:12px;font-size:.98em;font-weight:600;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:18px}
+        .btn-google:hover{background:#f5f5f5}
+        .btn-google img{width:20px}
+        .auth-divider{color:#ccc;margin:14px 0;font-size:.88em}
+        .auth-switch{color:#888;font-size:.93em}
+        .auth-switch a{color:#0f3460;font-weight:700;cursor:pointer}
+        .auth-error{background:#ffebee;color:#c62828;padding:11px;border-radius:10px;margin-bottom:12px;font-size:.88em;display:none}
+        .auth-error.show{display:block}
+        .loading-spinner{display:none;text-align:center;padding:30px;color:white;font-size:1.2em}
+        .loading-spinner.show{display:block}
+
+        /* APP */
+        .app{display:none;width:100%;max-width:1040px}
+        .app.active{display:block}
+
+        .top-bar{background:rgba(255,255,255,.08);backdrop-filter:blur(10px);border-radius:16px;padding:14px 22px;display:flex;justify-content:space-between;align-items:center;margin-bottom:28px;border:1px solid rgba(255,255,255,.15)}
+        .top-logo{color:white;font-size:1.3em;font-weight:800}
+        .user-info{display:flex;align-items:center;gap:10px}
+        .user-av{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#667eea,#764ba2);display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:.9em}
+        .user-nm{color:white;font-weight:600;font-size:.95em}
+        .btn-logout{background:rgba(255,255,255,.12);color:white;border:1px solid rgba(255,255,255,.25);padding:7px 14px;border-radius:18px;cursor:pointer;font-size:.88em;transition:background .2s}
+        .btn-logout:hover{background:rgba(255,255,255,.22)}
+
+        .screen{display:none}
+        .screen.active{display:block}
+
+        .scr-title{color:white;font-size:2em;font-weight:800;text-align:center;margin-bottom:8px}
+        .scr-sub{color:rgba(255,255,255,.55);text-align:center;margin-bottom:36px;font-size:1em}
+
+        .grid-auto{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:18px}
+
+        .g-card{background:rgba(255,255,255,.08);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.15);border-radius:20px;padding:34px 22px;text-align:center;cursor:pointer;transition:all .3s;color:white}
+        .g-card:hover{background:rgba(255,255,255,.18);transform:translateY(-6px);box-shadow:0 14px 36px rgba(0,0,0,.3)}
+        .g-card .ci{font-size:3.2em;margin-bottom:12px}
+        .g-card .ct{font-size:1.3em;font-weight:800;margin-bottom:5px}
+        .g-card .cd{font-size:.9em;opacity:.65}
+
+        .subj-card{border-radius:22px;padding:38px 28px;text-align:center;cursor:pointer;transition:all .3s;color:white;border:2px solid rgba(255,255,255,.15)}
+        .subj-card:hover{transform:translateY(-8px);box-shadow:0 20px 50px rgba(0,0,0,.4)}
+        .subj-en{background:linear-gradient(135deg,rgba(15,52,96,.7),rgba(83,52,131,.7))}
+        .subj-en:hover{border-color:#667eea}
+        .subj-fr{background:linear-gradient(135deg,rgba(140,20,40,.6),rgba(100,20,20,.6))}
+        .subj-fr:hover{border-color:#e94560}
+        .s-badge{display:inline-block;padding:5px 14px;border-radius:18px;font-size:.82em;font-weight:700;margin-bottom:14px}
+        .subj-en .s-badge{background:rgba(102,126,234,.35);color:#a5b4fc}
+        .subj-fr .s-badge{background:rgba(233,69,96,.3);color:#fca5a5}
+        .s-title{font-size:2em;font-weight:900;margin-bottom:6px}
+        .s-sub{font-size:.97em;opacity:.7;margin-bottom:16px}
+
+        .back-row{display:flex;align-items:center;gap:12px;margin-bottom:24px}
+        .btn-back{background:rgba(255,255,255,.1);color:white;border:1px solid rgba(255,255,255,.22);padding:9px 18px;border-radius:22px;cursor:pointer;font-size:.9em;transition:background .2s}
+        .btn-back:hover{background:rgba(255,255,255,.2)}
+        .breadcrumb{color:rgba(255,255,255,.45);font-size:.9em}
+        .breadcrumb span{color:rgba(255,255,255,.9);font-weight:700}
+
+        .units-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:12px}
+        .u-tile{background:rgba(255,255,255,.08);border:2px solid rgba(255,255,255,.12);border-radius:16px;padding:20px 8px;text-align:center;cursor:pointer;transition:all .25s;color:white;position:relative;overflow:hidden}
+        .u-tile:hover{background:rgba(255,255,255,.2);transform:translateY(-4px)}
+        .u-tile .un{font-size:1.9em;font-weight:800}
+        .u-tile .ul{font-size:.75em;opacity:.55;margin-top:3px}
+        .u-tile .u-bar{position:absolute;bottom:0;left:0;height:4px;background:linear-gradient(90deg,#4caf50,#81c784);border-radius:0 0 14px 14px}
+        .u-tile.done{border-color:rgba(76,175,80,.5)}
+        .u-tile.empty{opacity:.4;pointer-events:none}
+
+        .dir-row{display:flex;gap:12px;margin-bottom:24px;flex-wrap:wrap}
+        .dir-btn{flex:1;min-width:190px;padding:15px;background:rgba(255,255,255,.08);border:2px solid rgba(255,255,255,.18);border-radius:14px;cursor:pointer;color:white;text-align:center;transition:all .2s}
+        .dir-btn:hover{background:rgba(255,255,255,.16)}
+        .dir-btn.active{border-color:#667eea;background:rgba(102,126,234,.22)}
+        .dir-ico{font-size:1.4em;margin-bottom:5px}
+        .dir-lbl{font-size:.9em;font-weight:600}
+
+        .mode-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:16px}
+        .m-tile{background:rgba(255,255,255,.08);border:2px solid rgba(255,255,255,.14);border-radius:18px;padding:28px 18px;text-align:center;cursor:pointer;transition:all .25s;color:white}
+        .m-tile:hover{background:rgba(255,255,255,.19);transform:translateY(-5px)}
+        .m-tile .mi{font-size:2.6em;margin-bottom:10px}
+        .m-tile .mn{font-size:1.1em;font-weight:700;margin-bottom:5px}
+        .m-tile .md{font-size:.82em;opacity:.6;line-height:1.4}
+        .m-tile.star{border-color:rgba(255,193,7,.4)}
+        .m-tile.star:hover{border-color:rgba(255,193,7,.8)}
+        .nbadge{background:#ffc107;color:#1a1a2e;padding:3px 10px;border-radius:9px;font-size:.72em;font-weight:800;display:inline-block;margin-bottom:10px}
+
+        @media(max-width:600px){.units-grid{grid-template-columns:repeat(auto-fill,minmax(90px,1fr))}.scr-title{font-size:1.5em}.user-nm{display:none}}
+    </style>
+</head>
+<body>
+
+<!-- AUTH -->
+<div class="auth-wrap" id="authWrap">
+    <div class="loading-spinner show" id="authLoader">⏳ Laden…</div>
+
+    <div class="auth-box" id="authLogin">
+        <div class="auth-logo">📚</div>
+        <div class="auth-title">Schulhilfen</div>
+        <div class="auth-sub">Fortschritt wird automatisch gespeichert</div>
+        <div class="auth-error" id="loginErr"></div>
+        <button class="btn-google" onclick="signInGoogle()">
+            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="">Mit Google anmelden
+        </button>
+        <div class="auth-divider">— oder mit E-Mail —</div>
+        <input class="input-field" type="email" id="lEmail" placeholder="E-Mail">
+        <input class="input-field" type="password" id="lPass" placeholder="Passwort">
+        <button class="btn-primary" onclick="loginEmail()">Anmelden</button>
+        <div class="auth-switch">Noch kein Konto? <a onclick="show('authRegister')">Registrieren</a></div>
+    </div>
+
+    <div class="auth-box" id="authRegister">
+        <div class="auth-logo">📚</div>
+        <div class="auth-title">Registrieren</div>
+        <div class="auth-sub">Kostenloses Konto erstellen</div>
+        <div class="auth-error" id="regErr"></div>
+        <button class="btn-google" onclick="signInGoogle()">
+            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="">Mit Google registrieren
+        </button>
+        <div class="auth-divider">— oder mit E-Mail —</div>
+        <input class="input-field" type="text" id="rName" placeholder="Dein Name">
+        <input class="input-field" type="email" id="rEmail" placeholder="E-Mail">
+        <input class="input-field" type="password" id="rPass" placeholder="Passwort (min. 6 Zeichen)">
+        <button class="btn-primary" onclick="registerEmail()">Konto erstellen</button>
+        <div class="auth-switch">Bereits registriert? <a onclick="show('authLogin')">Anmelden</a></div>
+    </div>
+</div>
+
+<!-- APP -->
+<div class="app" id="mainApp">
+    <div class="top-bar">
+        <div class="top-logo">📚 Schulhilfen</div>
+        <div class="user-info">
+            <div class="user-av" id="uAv">?</div>
+            <div class="user-nm" id="uName">–</div>
+            <button class="btn-logout" onclick="doSignOut()">Abmelden</button>
+        </div>
+    </div>
+
+    <!-- Class -->
+    <div class="screen active" id="sClass">
+        <div class="scr-title">Wähle deine Klasse</div>
+        <div class="scr-sub">Dein persönlicher Lernbereich</div>
+        <div class="grid-auto" style="max-width:500px;margin:0 auto">
+            <div class="g-card" onclick="pickClass('Oberstufe')">
+                <div class="ci">🎓</div>
+                <div class="ct">Oberstufe</div>
+                <div class="cd">Englisch &amp; Französisch</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Subject -->
+    <div class="screen" id="sSubject">
+        <div class="back-row">
+            <button class="btn-back" onclick="nav('sClass')">← Zurück</button>
+            <div class="breadcrumb">Klasse: <span id="bcClass">–</span></div>
+        </div>
+        <div class="scr-title">Wähle dein Fach</div>
+        <div class="scr-sub">Was lernst du heute?</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:20px">
+            <div class="subj-card subj-en" onclick="pickSubject('english')">
+                <div class="s-badge">🇬🇧 Englisch</div>
+                <div class="s-title">meinKlett</div>
+                <div class="s-sub">English in Mind</div>
+                <div style="font-size:2.4em">📖</div>
+            </div>
+            <div class="subj-card subj-fr" onclick="pickSubject('french')">
+                <div class="s-badge">🇫🇷 Français</div>
+                <div class="s-title">Dis Donc!</div>
+                <div class="s-sub">Vocabulaire français</div>
+                <div style="font-size:2.4em">📗</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Units -->
+    <div class="screen" id="sUnit">
+        <div class="back-row">
+            <button class="btn-back" onclick="nav('sSubject')">← Zurück</button>
+            <div class="breadcrumb"><span id="bcSubj">–</span></div>
+        </div>
+        <div class="scr-title" id="unitTitle">Units</div>
+        <div class="scr-sub">Wähle eine Unit</div>
+        <div class="units-grid" id="unitsGrid"></div>
+    </div>
+
+    <!-- Mode -->
+    <div class="screen" id="sMode">
+        <div class="back-row">
+            <button class="btn-back" onclick="nav('sUnit')">← Zurück</button>
+            <div class="breadcrumb"><span id="bcUnit">–</span></div>
+        </div>
+        <div class="scr-title">Lernmodus wählen</div>
+        <div class="scr-sub" id="modeInfo">– Vokabeln</div>
+
+        <p style="color:rgba(255,255,255,.75);margin-bottom:10px;font-weight:700">Lernrichtung:</p>
+        <div class="dir-row">
+            <div class="dir-btn active" id="dBtn1" onclick="pickDir('to-german')">
+                <div class="dir-ico" id="dIco1">🌐 → 🇩🇪</div>
+                <div class="dir-lbl" id="dLbl1">Fremdsprache → Deutsch</div>
+            </div>
+            <div class="dir-btn" id="dBtn2" onclick="pickDir('to-foreign')">
+                <div class="dir-ico" id="dIco2">🇩🇪 → 🌐</div>
+                <div class="dir-lbl" id="dLbl2">Deutsch → Fremdsprache</div>
+            </div>
+        </div>
+
+        <div class="mode-grid">
+            <div class="m-tile star" onclick="go('leitner')">
+                <div class="nbadge">⭐ NEU</div>
+                <div class="mi">🗂️</div>
+                <div class="mn">Lernkartei</div>
+                <div class="md">3-Gruppen System – Alle Vokabeln wirklich beherrschen</div>
+            </div>
+            <div class="m-tile" onclick="go('write')">
+                <div class="mi">✍️</div>
+                <div class="mn">Schreiben</div>
+                <div class="md">Übersetzung eintippen und überprüfen</div>
+            </div>
+            <div class="m-tile" onclick="go('flashcards')">
+                <div class="mi">🎴</div>
+                <div class="mn">Karteikarten</div>
+                <div class="md">Umdrehen und selbst bewerten</div>
+            </div>
+            <div class="m-tile" onclick="go('choice')">
+                <div class="mi">☑️</div>
+                <div class="mn">Ankreuzen</div>
+                <div class="md">4 Antwortmöglichkeiten wählen</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="vocabulary-data.js"></script>
+<script src="firebase-config.js"></script>
+<script>
+// ── helpers ──
+function show(id){
+    document.querySelectorAll('.auth-box').forEach(b=>b.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+}
+function nav(id){
+    document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+}
+function err(elId,msg){
+    const el=document.getElementById(elId);
+    el.textContent=msg; el.classList.add('show');
+    setTimeout(()=>el.classList.remove('show'),4000);
+}
+
+// ── state ──
+let curClass='',curSubject='',curUnit=0,curDir='to-german';
+
+// ── auth callbacks (from firebase-config.js) ──
+function onUserLoggedIn(user){
+    document.getElementById('authWrap').style.display='none';
+    document.getElementById('mainApp').classList.add('active');
+    const nm = user.displayName || user.email.split('@')[0];
+    document.getElementById('uName').textContent = nm;
+    document.getElementById('uAv').textContent = nm.charAt(0).toUpperCase();
+    loadProgress();
+}
+function onUserLoggedOut(){
+    document.getElementById('authWrap').style.display='flex';
+    document.getElementById('mainApp').classList.remove('active');
+    document.getElementById('authLoader').classList.remove('show');
+    show('authLogin');
+}
+
+function doSignOut(){ firebase.auth().signOut(); }
+function signInGoogle(){
+    const p=new firebase.auth.GoogleAuthProvider();
+    firebase.auth().signInWithPopup(p).catch(e=>err('loginErr',e.message));
+}
+function loginEmail(){
+    const e=document.getElementById('lEmail').value;
+    const p=document.getElementById('lPass').value;
+    firebase.auth().signInWithEmailAndPassword(e,p).catch(ex=>err('loginErr',ex.message));
+}
+function registerEmail(){
+    const n=document.getElementById('rName').value.trim();
+    const e=document.getElementById('rEmail').value;
+    const p=document.getElementById('rPass').value;
+    if(!n){err('regErr','Bitte Namen eingeben.');return;}
+    firebase.auth().createUserWithEmailAndPassword(e,p)
+        .then(c=>c.user.updateProfile({displayName:n}))
+        .then(()=>{ const u=firebase.auth().currentUser; onUserLoggedIn(u); })
+        .catch(ex=>err('regErr',ex.message));
+}
+
+// ── progress ──
+let progressData={};
+function loadProgress(){
+    const uid=firebase.auth().currentUser?.uid;
+    if(!uid)return;
+    firebase.firestore().collection('progress').doc(uid).get()
+        .then(d=>{ if(d.exists) progressData=d.data(); refreshUnitsIfVisible(); })
+        .catch(()=>{});
+}
+function saveProgress(){
+    const uid=firebase.auth().currentUser?.uid;
+    if(!uid)return;
+    firebase.firestore().collection('progress').doc(uid).set(progressData).catch(()=>{});
+}
+function getProgress(){ return progressData; }
+
+// exposed to quiz pages
+window.getProgressData=()=>progressData;
+window.saveProgressData=(d)=>{ progressData=d; saveProgress(); };
+
+// ── navigation ──
+function pickClass(cls){
+    curClass=cls;
+    document.getElementById('bcClass').textContent=cls;
+    nav('sSubject');
+}
+function pickSubject(s){
+    curSubject=s;
+    const en=s==='english';
+    document.getElementById('bcSubj').textContent=en?'🇬🇧 meinKlett':'🇫🇷 Dis Donc!';
+    document.getElementById('unitTitle').textContent=en?'🇬🇧 Englisch – Units':'🇫🇷 Français – Unités';
+    document.getElementById('dIco1').textContent=(en?'🇬🇧':'🇫🇷')+' → 🇩🇪';
+    document.getElementById('dIco2').textContent='🇩🇪 → '+(en?'🇬🇧':'🇫🇷');
+    document.getElementById('dLbl1').textContent=(en?'Englisch':'Français')+' → Deutsch';
+    document.getElementById('dLbl2').textContent='Deutsch → '+(en?'Englisch':'Français');
+    buildUnits();
+    nav('sUnit');
+}
+function buildUnits(){
+    const grid=document.getElementById('unitsGrid');
+    grid.innerHTML='';
+    for(let u=1;u<=21;u++){
+        const voc=getVocabularyData(curSubject,u);
+        const has=voc&&voc.length>0;
+        const prog=progressData?.[curSubject]?.[u];
+        const g3=prog?.group3?.length||0;
+        const pct=has?Math.round(g3/voc.length*100):0;
+        const done=pct===100&&has;
+        const tile=document.createElement('div');
+        tile.className='u-tile'+(done?' done':'')+(has?'':' empty');
+        tile.onclick=()=>pickUnit(u);
+        tile.innerHTML=`<div class="un">${u}</div><div class="ul">${has?voc.length+' Wörter':'leer'}</div>${pct>0?`<div class="u-bar" style="width:${pct}%"></div>`:''}`;
+        grid.appendChild(tile);
+    }
+}
+function refreshUnitsIfVisible(){
+    if(document.getElementById('sUnit').classList.contains('active')) buildUnits();
+}
+function pickUnit(u){
+    curUnit=u;
+    const voc=getVocabularyData(curSubject,u);
+    document.getElementById('bcUnit').textContent=`Unit ${u}`;
+    document.getElementById('modeInfo').textContent=voc.length+' Vokabeln';
+    nav('sMode');
+}
+function pickDir(d){
+    curDir=d;
+    document.getElementById('dBtn1').classList.toggle('active',d==='to-german');
+    document.getElementById('dBtn2').classList.toggle('active',d==='to-foreign');
+}
+function go(mode){
+    const voc=getVocabularyData(curSubject,curUnit);
+    if(!voc||!voc.length){alert('Keine Vokabeln für diese Unit eingetragen.');return;}
+    const p=new URLSearchParams({subject:curSubject,unit:curUnit,direction:curDir});
+    const map={write:'quiz-write.html',flashcards:'quiz-flashcards.html',choice:'quiz-choice.html',leitner:'quiz-leitner.html'};
+    window.location.href=map[mode]+'?'+p;
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Schreiben – Schulhilfen</title>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:'Segoe UI',sans-serif;background:linear-gradient(135deg,#1a1a2e 0%,#16213e 50%,#0f3460 100%);min-height:100vh;padding:20px}
+        .wrap{max-width:760px;margin:0 auto}
+        .hdr{background:rgba(255,255,255,.08);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.15);border-radius:18px;padding:16px 22px;display:flex;align-items:center;gap:12px;margin-bottom:22px}
+        .btn-back{background:rgba(255,255,255,.12);color:white;border:1px solid rgba(255,255,255,.25);padding:9px 16px;border-radius:18px;cursor:pointer;font-size:.88em;text-decoration:none;white-space:nowrap}
+        .btn-back:hover{background:rgba(255,255,255,.22)}
+        .hdr-info{color:white}
+        .hdr-title{font-size:1.1em;font-weight:800}
+        .hdr-sub{font-size:.82em;color:rgba(255,255,255,.5)}
+
+        .prog-bar{height:7px;background:rgba(255,255,255,.1);border-radius:4px;margin-bottom:20px;overflow:hidden}
+        .prog-fill{height:100%;background:linear-gradient(90deg,#667eea,#764ba2);transition:width .3s}
+
+        .stats{display:flex;justify-content:space-around;background:rgba(255,255,255,.07);border-radius:14px;padding:16px;margin-bottom:20px}
+        .stat{text-align:center}
+        .sv{font-size:1.8em;font-weight:800;color:#667eea}
+        .sl{color:rgba(255,255,255,.5);font-size:.82em;margin-top:3px}
+
+        .card{background:rgba(255,255,255,.09);border:2px solid rgba(255,255,255,.15);border-radius:20px;padding:38px;text-align:center;margin-bottom:22px;min-height:160px;display:flex;flex-direction:column;justify-content:center}
+        .q-word{font-size:2.4em;font-weight:900;color:white;margin-bottom:8px}
+        .q-type{color:rgba(255,255,255,.45);font-style:italic}
+
+        .ans-input{width:100%;padding:14px 18px;font-size:1.15em;border:2px solid rgba(255,255,255,.2);border-radius:14px;text-align:center;background:rgba(255,255,255,.08);color:white;outline:none;transition:border-color .2s;margin-bottom:12px}
+        .ans-input::placeholder{color:rgba(255,255,255,.3)}
+        .ans-input:focus{border-color:#667eea}
+        .ans-input.correct{border-color:#4caf50;background:rgba(76,175,80,.15)}
+        .ans-input.wrong{border-color:#f44336;background:rgba(244,67,54,.15)}
+
+        .feedback{padding:14px;border-radius:12px;font-size:1em;text-align:center;display:none;margin-bottom:12px}
+        .feedback.show{display:block}
+        .feedback.correct{background:rgba(76,175,80,.2);color:#81c784;border:1px solid rgba(76,175,80,.4)}
+        .feedback.wrong{background:rgba(244,67,54,.15);color:#ef9a9a;border:1px solid rgba(244,67,54,.35)}
+        .correct-ans{font-weight:700;margin-top:6px}
+
+        .btn-row{display:flex;justify-content:center;gap:10px;flex-wrap:wrap}
+        .btn{background:linear-gradient(135deg,#0f3460,#533483);color:white;border:none;padding:13px 26px;border-radius:22px;font-size:1em;font-weight:700;cursor:pointer;transition:transform .2s}
+        .btn:hover{transform:translateY(-2px)}
+        .btn-sec{background:rgba(255,255,255,.1);color:white;border:1px solid rgba(255,255,255,.25);padding:12px 22px;border-radius:22px;font-size:.95em;cursor:pointer;transition:background .2s}
+        .btn-sec:hover{background:rgba(255,255,255,.2)}
+
+        .results{display:none;text-align:center;padding:20px}
+        .results.show{display:block}
+        .res-pct{font-size:4em;font-weight:900;color:#667eea;margin-bottom:16px}
+        .res-info{color:rgba(255,255,255,.7);margin-bottom:28px;font-size:1.05em}
+        .mistakes-box{background:rgba(255,255,255,.06);border-radius:16px;padding:22px;margin-bottom:24px;text-align:left}
+        .mistakes-box h3{color:white;margin-bottom:14px}
+        .m-item{background:rgba(255,255,255,.06);padding:12px;border-radius:10px;border-left:4px solid #f44336;margin-bottom:8px;color:rgba(255,255,255,.85);font-size:.9em}
+    </style>
+</head>
+<body>
+<div class="wrap">
+    <div class="hdr">
+        <a class="btn-back" href="index.html">← Zurück</a>
+        <div class="hdr-info">
+            <div class="hdr-title">✍️ Schreiben</div>
+            <div class="hdr-sub" id="hdrSub">Laden…</div>
+        </div>
+    </div>
+
+    <div id="quizArea">
+        <div class="prog-bar"><div class="prog-fill" id="progFill"></div></div>
+        <div class="stats">
+            <div class="stat"><div class="sv" id="curN">1</div><div class="sl">von <span id="totN">0</span></div></div>
+            <div class="stat"><div class="sv" id="corCt" style="color:#66bb6a">0</div><div class="sl">Richtig</div></div>
+            <div class="stat"><div class="sv" id="wrCt" style="color:#ef5350">0</div><div class="sl">Falsch</div></div>
+        </div>
+        <div class="card">
+            <div class="q-word" id="qWord">–</div>
+            <div class="q-type" id="qType"></div>
+        </div>
+        <input class="ans-input" id="ansInput" type="text" placeholder="Übersetzung eingeben…" autocomplete="off">
+        <div class="feedback" id="feedback"></div>
+        <div class="btn-row">
+            <button class="btn" id="checkBtn" onclick="checkAns()">Überprüfen</button>
+            <button class="btn" id="nextBtn" style="display:none" onclick="nextQ()">Weiter →</button>
+            <button class="btn-sec" id="showBtn" onclick="showAns()">Antwort zeigen</button>
+        </div>
+    </div>
+
+    <div class="results" id="results">
+        <div class="res-pct" id="resPct">–</div>
+        <div class="res-info" id="resInfo">–</div>
+        <div class="mistakes-box" id="mistakesBox" style="display:none">
+            <h3>❌ Fehler:</h3>
+            <div id="mistakeList"></div>
+        </div>
+        <div class="btn-row">
+            <button class="btn" onclick="restart()">🔄 Nochmal</button>
+            <button class="btn-sec" onclick="location.href='index.html'">🏠 Startseite</button>
+        </div>
+    </div>
+</div>
+
+<script src="vocabulary-data.js"></script>
+<script>
+const P=new URLSearchParams(location.search);
+const subject=P.get('subject'),unit=parseInt(P.get('unit')),dir=P.get('direction')||'to-german';
+let voc=[],cur=0,corr=0,wrong=0,mistakes=[];
+
+function init(){
+    const all=getVocabularyData(subject,unit);
+    if(!all||!all.length){alert('Keine Vokabeln.');history.back();return;}
+    voc=[...all].sort(()=>Math.random()-.5);
+    document.getElementById('hdrSub').textContent=(subject==='english'?'🇬🇧 Englisch':'🇫🇷 Français')+' – Unit '+unit;
+    document.getElementById('totN').textContent=voc.length;
+    showQ();
+}
+
+function showQ(){
+    if(cur>=voc.length){showResults();return;}
+    const v=voc[cur];
+    document.getElementById('qWord').textContent=dir==='to-german'?v.foreign:v.german;
+    document.getElementById('qType').textContent=v.type||'';
+    document.getElementById('curN').textContent=cur+1;
+    const ai=document.getElementById('ansInput');
+    ai.value='';ai.className='ans-input';ai.disabled=false;
+    document.getElementById('feedback').className='feedback';
+    document.getElementById('checkBtn').style.display='inline-block';
+    document.getElementById('nextBtn').style.display='none';
+    document.getElementById('showBtn').style.display='inline-block';
+    document.getElementById('progFill').style.width=(cur/voc.length*100)+'%';
+    ai.focus();
+}
+
+function norm(s){
+    return s.toLowerCase().trim()
+        .replace(/[.,!?;()]/g,'').replace(/\s+/g,' ')
+        .replace(/ä/g,'ae').replace(/ö/g,'oe').replace(/ü/g,'ue').replace(/ß/g,'ss')
+        .replace(/[éè]/g,'e').replace(/à/g,'a').replace(/ç/g,'c');
+}
+
+function checkAns(){
+    const v=voc[cur];
+    const correct=dir==='to-german'?v.german:v.foreign;
+    const user=document.getElementById('ansInput').value;
+    const n=norm(user);
+    const opts=correct.split(',').map(o=>norm(o.trim()));
+    const ok=opts.some(o=>n===o||(n.length>3&&o.includes(n))||(o.length>3&&n.includes(o)));
+    const ai=document.getElementById('ansInput');
+    const fb=document.getElementById('feedback');
+    ai.disabled=true;
+    document.getElementById('checkBtn').style.display='none';
+    document.getElementById('nextBtn').style.display='inline-block';
+    document.getElementById('showBtn').style.display='none';
+    if(ok){
+        ai.className='ans-input correct';
+        fb.className='feedback correct show';
+        fb.innerHTML='✅ Richtig!';
+        corr++;
+    }else{
+        ai.className='ans-input wrong';
+        fb.className='feedback wrong show';
+        fb.innerHTML=`❌ Falsch!<div class="correct-ans">Richtig: <strong>${correct}</strong></div>`;
+        wrong++;
+        mistakes.push({q:dir==='to-german'?v.foreign:v.german,correct,user});
+    }
+    document.getElementById('corCt').textContent=corr;
+    document.getElementById('wrCt').textContent=wrong;
+}
+
+function showAns(){
+    const v=voc[cur];
+    const correct=dir==='to-german'?v.german:v.foreign;
+    const fb=document.getElementById('feedback');
+    fb.style.cssText='display:block;background:rgba(255,152,0,.15);color:#ffb74d;border:1px solid rgba(255,152,0,.35);padding:14px;border-radius:12px;margin-bottom:12px';
+    fb.innerHTML=`💡 Antwort: <strong>${correct}</strong>`;
+    document.getElementById('ansInput').disabled=true;
+    document.getElementById('checkBtn').style.display='none';
+    document.getElementById('nextBtn').style.display='inline-block';
+    document.getElementById('showBtn').style.display='none';
+    wrong++;
+    document.getElementById('wrCt').textContent=wrong;
+    mistakes.push({q:dir==='to-german'?v.foreign:v.german,correct,user:'(übersprungen)'});
+}
+
+function nextQ(){ cur++; showQ(); }
+
+function showResults(){
+    document.getElementById('quizArea').style.display='none';
+    const res=document.getElementById('results');
+    res.classList.add('show');
+    const pct=Math.round(corr/voc.length*100);
+    document.getElementById('resPct').textContent=pct+'%';
+    document.getElementById('resInfo').textContent=`${corr} von ${voc.length} richtig`;
+    if(mistakes.length){
+        document.getElementById('mistakesBox').style.display='block';
+        document.getElementById('mistakeList').innerHTML=mistakes.map(m=>`<div class="m-item"><strong>${m.q}</strong><br>Dein: ${m.user}<br>Richtig: ${m.correct}</div>`).join('');
+    }
+}
+
+function restart(){
+    voc=[...getVocabularyData(subject,unit)].sort(()=>Math.random()-.5);
+    cur=0;corr=0;wrong=0;mistakes=[];
+    document.getElementById('quizArea').style.display='block';
+    document.getElementById('results').classList.remove('show');
+    showQ();
+}
+
+document.getElementById('ansInput').addEventListener('keypress',e=>{
+    if(e.key!=='Enter')return;
+    if(document.getElementById('checkBtn').style.display!=='none')checkAns();
+    else if(document.getElementById('nextBtn').style.display!=='none')nextQ();
+});
+
+init();
+</script>
+</body>
+</html>

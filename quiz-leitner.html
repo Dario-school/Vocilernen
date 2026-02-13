@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lernkartei – Schulhilfen</title>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:'Segoe UI',sans-serif;background:linear-gradient(135deg,#1a1a2e 0%,#16213e 50%,#0f3460 100%);min-height:100vh;padding:20px}
+
+        .wrap{max-width:860px;margin:0 auto}
+
+        /* header */
+        .hdr{background:rgba(255,255,255,.08);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.15);border-radius:18px;padding:18px 24px;display:flex;justify-content:space-between;align-items:center;margin-bottom:24px}
+        .hdr-left{display:flex;align-items:center;gap:12px}
+        .btn-back{background:rgba(255,255,255,.12);color:white;border:1px solid rgba(255,255,255,.25);padding:9px 18px;border-radius:20px;cursor:pointer;font-size:.9em;text-decoration:none;transition:background .2s}
+        .btn-back:hover{background:rgba(255,255,255,.22)}
+        .hdr-title{color:white;font-size:1.2em;font-weight:800}
+        .hdr-sub{color:rgba(255,255,255,.5);font-size:.85em}
+
+        /* group bars */
+        .groups-bar{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:24px}
+        .g-box{background:rgba(255,255,255,.07);border-radius:16px;padding:16px;text-align:center;border:2px solid transparent;transition:all .3s}
+        .g-box.g1{border-color:rgba(244,67,54,.3)}
+        .g-box.g2{border-color:rgba(255,193,7,.3)}
+        .g-box.g3{border-color:rgba(76,175,80,.3)}
+        .g-box.active-group{transform:scale(1.04);box-shadow:0 8px 24px rgba(0,0,0,.3)}
+        .g-box.g1.active-group{border-color:rgba(244,67,54,.8)}
+        .g-box.g2.active-group{border-color:rgba(255,193,7,.8)}
+        .g-box.g3.active-group{border-color:rgba(76,175,80,.8)}
+        .g-icon{font-size:1.8em;margin-bottom:6px}
+        .g-name{color:white;font-size:.82em;font-weight:700;margin-bottom:4px;opacity:.75}
+        .g-count{font-size:1.8em;font-weight:900;margin-bottom:4px}
+        .g-box.g1 .g-count{color:#ef5350}
+        .g-box.g2 .g-count{color:#ffd54f}
+        .g-box.g3 .g-count{color:#66bb6a}
+        .g-bar{height:5px;background:rgba(255,255,255,.1);border-radius:3px;overflow:hidden}
+        .g-fill{height:100%;border-radius:3px;transition:width .4s}
+        .g-box.g1 .g-fill{background:#ef5350}
+        .g-box.g2 .g-fill{background:#ffd54f}
+        .g-box.g3 .g-fill{background:#66bb6a}
+
+        /* phase indicator */
+        .phase-info{background:rgba(255,255,255,.06);border-radius:14px;padding:14px 20px;margin-bottom:20px;color:rgba(255,255,255,.75);font-size:.9em;text-align:center;border:1px solid rgba(255,255,255,.1)}
+        .phase-info strong{color:white}
+
+        /* card */
+        .card-wrap{perspective:1000px;margin-bottom:20px;cursor:pointer}
+        .card{position:relative;width:100%;height:260px;transition:transform .55s;transform-style:preserve-3d}
+        .card.flipped{transform:rotateY(180deg)}
+        .card-face{position:absolute;width:100%;height:100%;backface-visibility:hidden;border-radius:20px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:36px}
+        .card-front{background:rgba(255,255,255,.1);border:2px solid rgba(255,255,255,.2)}
+        .card-back{background:linear-gradient(135deg,rgba(15,52,96,.8),rgba(83,52,131,.8));border:2px solid rgba(102,126,234,.5);transform:rotateY(180deg)}
+        .card-word{font-size:2.4em;font-weight:900;color:white;text-align:center;margin-bottom:10px}
+        .card-type{color:rgba(255,255,255,.5);font-style:italic;font-size:.95em}
+        .card-hint{color:rgba(255,255,255,.4);font-size:.85em;margin-top:16px}
+        .card-direction{color:rgba(255,255,255,.5);font-size:.82em;margin-bottom:10px}
+
+        /* action buttons */
+        .action-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
+        .action-row.one{grid-template-columns:1fr}
+        .btn-know{background:linear-gradient(135deg,#2e7d32,#43a047);color:white;border:none;padding:18px;border-radius:16px;font-size:1.1em;font-weight:700;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:10px}
+        .btn-know:hover{transform:translateY(-3px);box-shadow:0 8px 20px rgba(46,125,50,.4)}
+        .btn-nope{background:linear-gradient(135deg,#b71c1c,#c62828);color:white;border:none;padding:18px;border-radius:16px;font-size:1.1em;font-weight:700;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:10px}
+        .btn-nope:hover{transform:translateY(-3px);box-shadow:0 8px 20px rgba(183,28,28,.4)}
+        .btn-flip{background:rgba(255,255,255,.12);color:white;border:1px solid rgba(255,255,255,.25);padding:14px;border-radius:14px;font-size:1em;font-weight:600;cursor:pointer;transition:all .2s;width:100%;text-align:center}
+        .btn-flip:hover{background:rgba(255,255,255,.22)}
+
+        /* completed */
+        .completed-screen{display:none;text-align:center;padding:40px 20px}
+        .completed-screen.show{display:block}
+        .comp-icon{font-size:5em;margin-bottom:16px}
+        .comp-title{color:white;font-size:2.2em;font-weight:900;margin-bottom:10px}
+        .comp-sub{color:rgba(255,255,255,.65);font-size:1.05em;margin-bottom:36px}
+        .btn-finish{background:linear-gradient(135deg,#0f3460,#533483);color:white;border:none;padding:16px 36px;border-radius:14px;font-size:1.1em;font-weight:700;cursor:pointer;transition:transform .2s;margin:8px}
+        .btn-finish:hover{transform:translateY(-3px)}
+        .btn-retry{background:rgba(255,255,255,.12);color:white;border:1px solid rgba(255,255,255,.3);padding:14px 28px;border-radius:14px;font-size:1em;font-weight:600;cursor:pointer;transition:background .2s;margin:8px}
+        .btn-retry:hover{background:rgba(255,255,255,.22)}
+
+        /* animation */
+        @keyframes slideIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+        .quiz-area{animation:slideIn .3s ease}
+
+        @media(max-width:600px){.card{height:220px}.card-word{font-size:1.8em}.action-row{grid-template-columns:1fr}}
+    </style>
+</head>
+<body>
+<div class="wrap">
+    <div class="hdr">
+        <div class="hdr-left">
+            <a href="index.html" class="btn-back">← Zurück</a>
+            <div>
+                <div class="hdr-title">🗂️ Lernkartei</div>
+                <div class="hdr-sub" id="hdrSub">Laden…</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Group display -->
+    <div class="groups-bar">
+        <div class="g-box g1 active-group" id="gBox1">
+            <div class="g-icon">🔴</div>
+            <div class="g-name">Gruppe 1 – Lernen</div>
+            <div class="g-count" id="g1count">0</div>
+            <div class="g-bar"><div class="g-fill" id="g1bar" style="width:0%"></div></div>
+        </div>
+        <div class="g-box g2" id="gBox2">
+            <div class="g-icon">🟡</div>
+            <div class="g-name">Gruppe 2 – Üben</div>
+            <div class="g-count" id="g2count">0</div>
+            <div class="g-bar"><div class="g-fill" id="g2bar" style="width:0%"></div></div>
+        </div>
+        <div class="g-box g3" id="gBox3">
+            <div class="g-icon">🟢</div>
+            <div class="g-name">Gruppe 3 – Gelernt</div>
+            <div class="g-count" id="g3count">0</div>
+            <div class="g-bar"><div class="g-fill" id="g3bar" style="width:0%"></div></div>
+        </div>
+    </div>
+
+    <!-- Phase info -->
+    <div class="phase-info" id="phaseInfo">Laden…</div>
+
+    <!-- Quiz area -->
+    <div class="quiz-area" id="quizArea">
+        <div class="card-wrap" onclick="flipCard()">
+            <div class="card" id="theCard">
+                <div class="card-face card-front">
+                    <div class="card-direction" id="cardDir">🌐 → 🇩🇪</div>
+                    <div class="card-word" id="frontWord">–</div>
+                    <div class="card-type" id="frontType"></div>
+                    <div class="card-hint">Klicken zum Umdrehen</div>
+                </div>
+                <div class="card-face card-back">
+                    <div class="card-direction">Antwort:</div>
+                    <div class="card-word" id="backWord">–</div>
+                    <div class="card-type" id="backType"></div>
+                </div>
+            </div>
+        </div>
+
+        <button class="btn-flip" onclick="flipCard()" id="btnFlip">🔄 Karte umdrehen (Leertaste)</button>
+
+        <div class="action-row" id="actionRow" style="display:none">
+            <button class="btn-nope" onclick="answer(false)">❌ Nicht gewusst</button>
+            <button class="btn-know" onclick="answer(true)">✅ Gewusst!</button>
+        </div>
+    </div>
+
+    <!-- Completed -->
+    <div class="completed-screen" id="completedScreen">
+        <div class="comp-icon">🏆</div>
+        <div class="comp-title">Einheit abgeschlossen!</div>
+        <div class="comp-sub">Du hast alle Vokabeln in Gruppe 3 gebracht.<br>Fantastisch!</div>
+        <div>
+            <button class="btn-finish" onclick="goHome()">🏠 Zur Startseite</button>
+            <button class="btn-retry" onclick="resetAndRestart()">🔄 Nochmal üben</button>
+        </div>
+    </div>
+</div>
+
+<script src="vocabulary-data.js"></script>
+<script>
+// ── URL params ──
+const P = new URLSearchParams(location.search);
+const subject = P.get('subject');
+const unitNum = parseInt(P.get('unit'));
+const direction = P.get('direction') || 'to-german';
+
+// ── Load vocab ──
+const allVocab = getVocabularyData(subject, unitNum);
+const total = allVocab.length;
+
+// ── Header ──
+const subName = subject==='english' ? '🇬🇧 Englisch' : '🇫🇷 Français';
+document.getElementById('hdrSub').textContent = subName + ' – Unit ' + unitNum + ' – ' + total + ' Vokabeln';
+const dirArrow = direction==='to-german'
+    ? (subject==='english'?'🇬🇧':'🇫🇷') + ' → 🇩🇪'
+    : '🇩🇪 → ' + (subject==='english'?'🇬🇧':'🇫🇷');
+document.getElementById('cardDir').textContent = dirArrow;
+
+// ── State ──
+// group1: indices (not yet known or demoted back)
+// group2: indices (got right once)
+// group3: indices (got right twice = done)
+let g1 = [], g2 = [], g3 = [];
+let currentQueue = [];   // active queue being drilled
+let currentIdx = null;   // vocabulary index currently shown
+let isFlipped = false;
+let phase = 1; // 1 = drilling g1, 2 = drilling g2
+
+function initFromSaved() {
+    const saved = getSavedState();
+    if (saved && saved.g1 && saved.g2 && saved.g3 &&
+        saved.g1.length + saved.g2.length + saved.g3.length === total) {
+        g1 = saved.g1;
+        g2 = saved.g2;
+        g3 = saved.g3;
+    } else {
+        // All start in group 1
+        g1 = allVocab.map((_, i) => i);
+        g2 = [];
+        g3 = [];
+    }
+
+    if (g3.length === total) {
+        showCompleted();
+        return;
+    }
+
+    determinePhase();
+    buildQueue();
+    updateUI();
+    showNext();
+}
+
+function determinePhase() {
+    // Phase 1: drain g1 first; Phase 2: work on g2
+    if (g1.length > 0) {
+        phase = 1;
+    } else if (g2.length > 0) {
+        phase = 2;
+    }
+}
+
+function buildQueue() {
+    if (phase === 1) {
+        currentQueue = shuffle([...g1]);
+    } else {
+        currentQueue = shuffle([...g2]);
+    }
+}
+
+function shuffle(arr) {
+    for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+}
+
+function showNext() {
+    // If current queue is empty, decide what to do
+    if (currentQueue.length === 0) {
+        if (phase === 1 && g1.length === 0 && g2.length > 0) {
+            // Finished g1 → move to g2
+            phase = 2;
+            buildQueue();
+        } else if (phase === 1 && g1.length > 0) {
+            // Rebuild g1 queue (words that went wrong)
+            buildQueue();
+        } else if (phase === 2 && g2.length === 0) {
+            // All in g3?
+            if (g3.length === total) { showCompleted(); return; }
+            // g1 got new cards from demotions
+            if (g1.length > 0) { phase = 1; buildQueue(); }
+        } else if (phase === 2 && g2.length > 0) {
+            buildQueue();
+        }
+
+        if (currentQueue.length === 0) {
+            if (g3.length === total) showCompleted();
+            return;
+        }
+    }
+
+    currentIdx = currentQueue.shift();
+    showCard(currentIdx);
+    saveState();
+    updateUI();
+}
+
+function showCard(idx) {
+    const v = allVocab[idx];
+    const qWord = direction === 'to-german' ? v.foreign : v.german;
+    const aWord = direction === 'to-german' ? v.german : v.foreign;
+    document.getElementById('frontWord').textContent = qWord;
+    document.getElementById('frontType').textContent = v.type || '';
+    document.getElementById('backWord').textContent = aWord;
+    document.getElementById('backType').textContent = v.type || '';
+
+    // Reset flip
+    isFlipped = false;
+    document.getElementById('theCard').classList.remove('flipped');
+    document.getElementById('btnFlip').style.display = 'block';
+    document.getElementById('actionRow').style.display = 'none';
+}
+
+function flipCard() {
+    if (isFlipped) return;
+    isFlipped = true;
+    document.getElementById('theCard').classList.add('flipped');
+    document.getElementById('btnFlip').style.display = 'none';
+    document.getElementById('actionRow').style.display = 'grid';
+}
+
+function answer(correct) {
+    if (!isFlipped) { flipCard(); return; }
+
+    if (correct) {
+        // Move up one group
+        if (phase === 1) {
+            // g1 → g2
+            g1 = g1.filter(i => i !== currentIdx);
+            g2.push(currentIdx);
+        } else if (phase === 2) {
+            // g2 → g3
+            g2 = g2.filter(i => i !== currentIdx);
+            g3.push(currentIdx);
+        }
+    } else {
+        if (phase === 1) {
+            // Stay in g1, just goes to end of queue (already removed from currentQueue)
+            // It's still in g1, put it back in queue randomly
+            const insertAt = Math.floor(Math.random() * (currentQueue.length + 1));
+            currentQueue.splice(insertAt, 0, currentIdx);
+        } else if (phase === 2) {
+            // g2 → g1 (demote), comes first priority
+            g2 = g2.filter(i => i !== currentIdx);
+            g1.push(currentIdx);
+            // Immediately add to front of queue after current g1 words
+            // We must finish g1 before g2, so insert into g1 processing
+            // Switch to phase 1 if we're in phase 2
+            // But spec says: if in g2 and wrong → go to g1 and comes immediately
+            // So prepend to currentQueue only if we stay in phase
+            // Actually: switch to phase 1 and add this to front
+            phase = 1;
+            currentQueue = [currentIdx, ...currentQueue.filter(i => g1.includes(i))];
+        }
+    }
+
+    updateGroupBoxes();
+    saveState();
+
+    // Check if unit complete
+    if (g3.length === total) { showCompleted(); return; }
+
+    // Check if need to switch phase
+    determinePhase();
+    if (currentQueue.length === 0) buildQueue();
+
+    showNext();
+}
+
+function updateUI() {
+    updateGroupBoxes();
+    updatePhaseInfo();
+}
+
+function updateGroupBoxes() {
+    document.getElementById('g1count').textContent = g1.length;
+    document.getElementById('g2count').textContent = g2.length;
+    document.getElementById('g3count').textContent = g3.length;
+
+    document.getElementById('g1bar').style.width = (g1.length / total * 100) + '%';
+    document.getElementById('g2bar').style.width = (g2.length / total * 100) + '%';
+    document.getElementById('g3bar').style.width = (g3.length / total * 100) + '%';
+
+    document.getElementById('gBox1').classList.toggle('active-group', phase === 1);
+    document.getElementById('gBox2').classList.toggle('active-group', phase === 2);
+    document.getElementById('gBox3').classList.toggle('active-group', false);
+}
+
+function updatePhaseInfo() {
+    const el = document.getElementById('phaseInfo');
+    if (phase === 1) {
+        el.innerHTML = `<strong>Phase 1:</strong> Lerne die roten Karten – erst wenn Gruppe 1 leer ist, geht es weiter zu Gruppe 2`;
+    } else {
+        el.innerHTML = `<strong>Phase 2:</strong> Übe die gelben Karten – richtig → Gruppe 3 ✅, falsch → zurück in Gruppe 1 🔴`;
+    }
+}
+
+function showCompleted() {
+    document.getElementById('quizArea').style.display = 'none';
+    document.getElementById('completedScreen').classList.add('show');
+    // Save progress to parent
+    saveState(true);
+}
+
+// ── PERSISTENCE ──
+function getKey() {
+    return `leitner_${subject}_${unitNum}_${direction}`;
+}
+
+function saveState(completed) {
+    const data = { g1, g2, g3, ts: Date.now() };
+    localStorage.setItem(getKey(), JSON.stringify(data));
+
+    // Also save to progress tracking
+    try {
+        let prog = JSON.parse(localStorage.getItem('sh_progress') || '{}');
+        if (!prog[subject]) prog[subject] = {};
+        if (!prog[subject][unitNum]) prog[subject][unitNum] = {};
+        prog[subject][unitNum].group3 = g3.length;
+        prog[subject][unitNum].total = total;
+        if (completed) prog[subject][unitNum].completed = true;
+        localStorage.setItem('sh_progress', JSON.stringify(prog));
+
+        // Also try window function (when Firebase is active)
+        if (typeof window.saveProgressData === 'function') {
+            window.saveProgressData(prog);
+        }
+    } catch(e) {}
+}
+
+function getSavedState() {
+    try {
+        return JSON.parse(localStorage.getItem(getKey()));
+    } catch(e) { return null; }
+}
+
+function resetAndRestart() {
+    localStorage.removeItem(getKey());
+    g1 = allVocab.map((_, i) => i);
+    g2 = []; g3 = [];
+    phase = 1;
+    document.getElementById('quizArea').style.display = 'block';
+    document.getElementById('completedScreen').classList.remove('show');
+    buildQueue();
+    updateUI();
+    showNext();
+}
+
+function goHome() {
+    window.location.href = 'index.html';
+}
+
+// ── Keyboard ──
+document.addEventListener('keydown', e => {
+    if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); flipCard(); }
+    else if (e.key === 'ArrowRight' || e.key === 'y' || e.key === 'j') answer(true);
+    else if (e.key === 'ArrowLeft' || e.key === 'n') answer(false);
+});
+
+// ── Start ──
+if (!allVocab || allVocab.length === 0) {
+    alert('Keine Vokabeln für diese Unit gefunden.');
+    history.back();
+} else {
+    initFromSaved();
+}
+</script>
+</body>
+</html>
